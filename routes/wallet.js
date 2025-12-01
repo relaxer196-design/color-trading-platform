@@ -1,70 +1,66 @@
 const express = require('express');
 const router = express.Router();
-const Razorpay = require('razorpay');
 const User = require('../models/User');
 const Transaction = require('../models/Transaction');
 const auth = require('../middleware/auth');
 
-const razorpay = new Razorpay({
-  key_id: process.env.RAZORPAY_KEY_ID,
-  key_secret: process.env.RAZORPAY_KEY_SECRET
-});
-
-// Create deposit order
+// Manual deposit (Admin will approve)
 router.post('/deposit', auth, async (req, res) => {
   try {
-    const { amount } = req.body;
+    const { amount, upiId, transactionId } = req.body;
 
     if (amount < 100) {
       return res.status(400).json({ message: 'Minimum deposit is ₹100' });
     }
 
-    const options = {
-      amount: amount * 100,
-      currency: 'INR',
-      receipt: `deposit_${Date.now()}`
-    };
-
-    const order = await razorpay.orders.create(options);
-
     const transaction = new Transaction({
       userId: req.user.id,
       type: 'deposit',
       amount,
-      transactionId: order.id,
-      status: 'pending'
+      transactionId: transactionId || `DEP${Date.now()}`,
+      status: 'pending',
+      description: `Deposit request - UPI: ${upiId || 'N/A'}`
     });
 
     await transaction.save();
 
-    res.json({ order, transactionId: transaction._id });
+    res.json({ 
+      message: 'Deposit request submitted. Admin will approve shortly.',
+      transaction 
+    });
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 });
 
-// Verify deposit
-router.post('/verify-deposit', auth, async (req, res) => {
+// Add balance manually (for testing - remove in production)
+router.post('/add-balance', auth, async (req, res) => {
   try {
-    const { transactionId, paymentId } = req.body;
+    const { amount } = req.body;
 
-    const transaction = await Transaction.findById(transactionId);
-    if (!transaction) {
-      return res.status(404).json({ message: 'Transaction not found' });
+    if (amount < 10 || amount > 10000) {
+      return res.status(400).json({ message: 'Amount must be between ₹10 and ₹10,000' });
     }
 
-    // Update transaction
-    transaction.status = 'completed';
-    transaction.transactionId = paymentId;
-    await transaction.save();
-
-    // Update user balance
     const user = await User.findById(req.user.id);
-    user.balance += transaction.amount;
-    user.totalDeposit += transaction.amount;
+    user.balance += amount;
+    user.totalDeposit += amount;
     await user.save();
 
-    res.json({ message: 'Deposit successful', balance: user.balance });
+    const transaction = new Transaction({
+      userId: req.user.id,
+      type: 'deposit',
+      amount,
+      status: 'completed',
+      description: 'Manual balance addition'
+    });
+
+    await transaction.save();
+
+    res.json({ 
+      message: 'Balance added successfully', 
+      balance: user.balance 
+    });
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
   }
@@ -73,7 +69,7 @@ router.post('/verify-deposit', auth, async (req, res) => {
 // Request withdrawal
 router.post('/withdraw', auth, async (req, res) => {
   try {
-    const { amount } = req.body;
+    const { amount, upiId, accountNumber } = req.body;
 
     if (amount < 200) {
       return res.status(400).json({ message: 'Minimum withdrawal is ₹200' });
@@ -89,7 +85,7 @@ router.post('/withdraw', auth, async (req, res) => {
       type: 'withdrawal',
       amount,
       status: 'pending',
-      description: 'Withdrawal request'
+      description: `Withdrawal to ${upiId || accountNumber || 'Bank Account'}`
     });
 
     await transaction.save();
@@ -98,7 +94,10 @@ router.post('/withdraw', auth, async (req, res) => {
     user.balance -= amount;
     await user.save();
 
-    res.json({ message: 'Withdrawal request submitted', transaction });
+    res.json({ 
+      message: 'Withdrawal request submitted. Admin will process shortly.', 
+      transaction 
+    });
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
   }
@@ -112,6 +111,16 @@ router.get('/transactions', auth, async (req, res) => {
       .limit(50);
 
     res.json({ transactions });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
+// Get balance
+router.get('/balance', auth, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+    res.json({ balance: user.balance });
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
   }
