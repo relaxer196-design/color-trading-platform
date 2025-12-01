@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Color Trading Platform</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="app">
+        <!-- Login/Register Page -->
+        <div id="authPage" class="page active">
+            <div class="auth-container">
+                <h1>🎨 Color Trading</h1>
+                <div class="auth-tabs">
+                    <button class="tab-btn active" onclick="showLogin()">Login</button>
+                    <button class="tab-btn" onclick="showRegister()">Register</button>
+                </div>
+                
+                <!-- Login Form -->
+                <form id="loginForm" class="auth-form">
+                    <input type="email" id="loginEmail" placeholder="Email" required>
+                    <input type="password" id="loginPassword" placeholder="Password" required>
+                    <button type="submit" class="btn-primary">Login</button>
+                </form>
+
+                <!-- Register Form -->
+                <form id="registerForm" class="auth-form" style="display:none;">
+                    <input type="text" id="regUsername" placeholder="Username" required>
+                    <input type="email" id="regEmail" placeholder="Email" required>
+                    <input type="tel" id="regPhone" placeholder="Phone" required>
+                    <input type="password" id="regPassword" placeholder="Password" required>
+                    <input type="text" id="regReferral" placeholder="Referral Code (Optional)">
+                    <button type="submit" class="btn-primary">Register</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Main Game Page -->
+        <div id="gamePage" class="page">
+            <header>
+                <div class="header-content">
+                    <h2>Color Trading</h2>
+                    <div class="user-info">
+                        <span id="userBalance">₹0</span>
+                        <button onclick="showProfile()">👤</button>
+                        <button onclick="logout()">🚪</button>
+                    </div>
+                </div>
+            </header>
+
+            <main>
+                <!-- Game Timer -->
+                <div class="game-timer">
+                    <div class="period">Period: <span id="gamePeriod">-</span></div>
+                    <div class="timer">
+                        <span id="countdown">03:00</span>
+                    </div>
+                </div>
+
+                <!-- Color Selection -->
+                <div class="color-selection">
+                    <button class="color-btn green" onclick="selectColor('green')">
+                        <span>Green</span>
+                        <span class="multiplier">2x</span>
+                    </button>
+                    <button class="color-btn violet" onclick="selectColor('violet')">
+                        <span>Violet</span>
+                        <span class="multiplier">4.5x</span>
+                    </button>
+                    <button class="color-btn red" onclick="selectColor('red')">
+                        <span>Red</span>
+                        <span class="multiplier">2x</span>
+                    </button>
+                </div>
+
+                <!-- Number Selection -->
+                <div class="number-selection">
+                    <button class="number-btn" onclick="selectNumber(0)">0</button>
+                    <button class="number-btn" onclick="selectNumber(1)">1</button>
+                    <button class="number-btn" onclick="selectNumber(2)">2</button>
+                    <button class="number-btn" onclick="selectNumber(3)">3</button>
+                    <button class="number-btn" onclick="selectNumber(4)">4</button>
+                    <button class="number-btn" onclick="selectNumber(5)">5</button>
+                    <button class="number-btn" onclick="selectNumber(6)">6</button>
+                    <button class="number-btn" onclick="selectNumber(7)">7</button>
+                    <button class="number-btn" onclick="selectNumber(8)">8</button>
+                    <button class="number-btn" onclick="selectNumber(9)">9</button>
+                </div>
+
+                <!-- Bet Amount -->
+                <div class="bet-amount">
+                    <h3>Select Amount</h3>
+                    <div class="amount-buttons">
+                        <button onclick="setAmount(10)">₹10</button>
+                        <button onclick="setAmount(50)">₹50</button>
+                        <button onclick="setAmount(100)">₹100</button>
+                        <button onclick="setAmount(500)">₹500</button>
+                        <button onclick="setAmount(1000)">₹1000</button>
+                    </div>
+                    <input type="number" id="customAmount" placeholder="Custom Amount" min="10">
+                    <button class="btn-primary" onclick="placeBet()">Place Bet</button>
+                </div>
+
+                <!-- Recent Results -->
+                <div class="recent-results">
+                    <h3>Recent Results</h3>
+                    <div id="resultsList"></div>
+                </div>
+
+                <!-- My Bets -->
+                <div class="my-bets">
+                    <h3>My Bets</h3>
+                    <div id="betsList"></div>
+                </div>
+            </main>
+
+            <!-- Bottom Navigation -->
+            <nav class="bottom-nav">
+                <button onclick="showGame()">🎮 Game</button>
+                <button onclick="showWallet()">💰 Wallet</button>
+                <button onclick="showHistory()">📊 History</button>
+                <button onclick="showProfile()">👤 Profile</button>
+            </nav>
+        </div>
+
+        <!-- Admin Panel -->
+        <div id="adminPage" class="page">
+            <header>
+                <h2>Admin Panel</h2>
+                <button onclick="showGame()">Back to Game</button>
+            </header>
+            <div class="admin-content">
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <h3>Total Users</h3>
+                        <p id="totalUsers">0</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Total Deposits</h3>
+                        <p id="totalDeposits">₹0</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Total Withdrawals</h3>
+                        <p id="totalWithdrawals">₹0</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Total Bets</h3>
+                        <p id="totalBets">0</p>
+                    </div>
+                </div>
+
+                <div class="admin-section">
+                    <h3>Pending Withdrawals</h3>
+                    <div id="withdrawalsList"></div>
+                </div>
+
+                <div class="admin-section">
+                    <h3>Generate Game Result</h3>
+                    <form id="resultForm">
+                        <input type="text" id="resultGameId" placeholder="Game ID" required>
+                        <select id="resultColor" required>
+                            <option value="">Select Color</option>
+                            <option value="red">Red</option>
+                            <option value="green">Green</option>
+                            <option value="violet">Violet</option>
+                        </select>
+                        <input type="number" id="resultNumber" placeholder="Number (0-9)" min="0" max="9" required>
+                        <button type="submit" class="btn-primary">Generate Result</button>
+                    </form>
+                </div>
+
+                <div class="admin-section">
+                    <h3>All Users</h3>
+                    <div id="usersList"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
