@@ -131,7 +131,34 @@ function showGame() {
 }
 
 function showWallet() {
-    alert('Wallet page - Coming soon!');
+    const amount = prompt('Enter amount to add to wallet (₹10 - ₹10,000):');
+    if (amount) {
+        addBalance(parseInt(amount));
+    }
+}
+
+async function addBalance(amount) {
+    try {
+        const response = await fetch(`${API_URL}/wallet/add-balance`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ amount })
+        });
+
+        const data = await response.json();
+        
+        if (response.ok) {
+            alert(`₹${amount} added to your wallet!`);
+            loadUserData();
+        } else {
+            alert(data.message);
+        }
+    } catch (error) {
+        alert('Failed to add balance: ' + error.message);
+    }
 }
 
 function showHistory() {
